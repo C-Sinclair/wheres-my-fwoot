@@ -1,12 +1,16 @@
 <script>
   import { onMount } from 'svelte';
-  import { Player } from 'tone'
+  import { Player, Buffer as Bugger } from 'tone'
   import Play from './Play.svelte'
+
+  const songBuffer = new Bugger('/sounds/wheres-my-fwoot.mp3')
+  const song = new Player(songBuffer).toDestination()
+  song.loop = true
 
   const BPM = 135
   const tick = BPM * 4
 
-  let song, sample, started = false;
+  let sample, started = false;
   let fwoots = {
     apple: { x: 0, y: 0, z: 0 }, 
     banana: { x: 0, y: 0, z: 0 }, 
@@ -17,8 +21,6 @@
   onMount(() => {
     let interval;
 
-    song = new Player('/sounds/wheres-my-fwoot.mp3').toDestination()
-    song.loop = true
     sample = new Player('/sounds/fwoot-only.mp3').toDestination()
 
     interval = setInterval(() => {
