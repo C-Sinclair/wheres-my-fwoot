@@ -1,69 +1,105 @@
 <script>
-  import {onMount} from 'svelte';
-  let count = 0;
+  import { onMount } from 'svelte';
+  import { Player } from 'tone'
+  import Play from './Play.svelte'
+
+  const BPM = 135
+  const tick = BPM * 4
+
+  let song, sample, started = false;
+  let fwoots = {
+    apple: { x: 0, y: 0, z: 0 }, 
+    banana: { x: 0, y: 0, z: 0 }, 
+    watermelon: { x: 0, y: 0, z: 0 }, 
+    peach: { x: 0, y: 0, z: 0 }
+  }
+
   onMount(() => {
-    const interval = setInterval(() => count++, 1000);
+    let interval;
+
+    song = new Player('/sounds/wheres-my-fwoot.mp3').toDestination()
+    song.loop = true
+    sample = new Player('/sounds/fwoot-only.mp3').toDestination()
+
+    interval = setInterval(() => {
+      fwoots = Object.entries(fwoots).reduce((acc, [fwoot]) => {
+        return {
+          ...acc,
+          [fwoot]: { x: genPozish(), y: genPozish(), z: genPozish() }
+        }
+      }, fwoots)
+    }, tick)
+
     return () => {
       clearInterval(interval);
-    };
-  });
+    }
+  })
+
+  const onPlay = () => { 
+    started = true 
+    song.start()
+  }
+
+  const onPlaySample = () => {
+    sample?.start()
+  }
+
+  const genPozish = () => Math.random() * 400 - 200
+
 </script>
 
 <style>
   :global(body) {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+    background-color: black;
   }
-  .App {
-    text-align: center;
-  }
-  .App code {
-    background: #0002;
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-  .App p {
-    margin: 0.4rem;
-  }
-
-  .App-header {
-    background-color: #f9f6f6;
-    color: #333;
-    min-height: 100vh;
+  main { 
+    width: 100vw;
+    height: 100vh;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    font-size: calc(10px + 2vmin);
+    align-items: center;
   }
-  .App-link {
-    color: #ff3e00;
+  button { 
+    outline: none;
+    border: none;
+    background: none;
+    padding: 20px 40px;
+    cursor: pointer;
+    width: 50%;
   }
-  .App-logo {
-    height: 36vmin;
-    pointer-events: none;
-    margin-bottom: 3rem;
-    animation: App-logo-pulse infinite 1.6s ease-in-out alternate;
+  img { 
+    max-width: 200px;
+    transition: all var(--tick) ease;
+    cursor: pointer;
+    transform: translate3d(var(--x),var(--y),var(--z));
   }
-  @keyframes App-logo-pulse {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.06);
-    }
+  img:hover {
+    transform: scale(1.2);
   }
 </style>
 
-<div class="App">
-  <header class="App-header">
-    <img src="/logo.svg" class="App-logo" alt="logo" />
-    <p>Edit <code>src/App.svelte</code> and save to reload.</p>
-    <p>Page has been open for <code>{count}</code> seconds.</p>
-    <p>
-      <a class="App-link" href="https://svelte.dev" target="_blank" rel="noopener noreferrer">
-        Learn Svelte
-      </a>
-    </p>
-  </header>
-</div>
+<main>
+  {#if !started}
+    <button on:click={onPlay}>
+      <Play />
+    </button>
+  {:else}
+    {#each Object.entries(fwoots) as [fwoot, {x,y,z}]}
+      <img 
+        class={`fwoot ${fwoot}`} 
+        on:click={onPlaySample} 
+        alt={fwoot} 
+        src={`/images/${fwoot}.png`}
+        style={`
+          --x: ${x}px;
+          --y: ${y}px;
+          --z: ${z}px;
+          --tick: ${tick / 1000}s;
+        `}
+      />
+    {/each}
+  {/if}
+
+</main>
